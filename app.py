@@ -18,12 +18,17 @@ MODEL_PATH = "insect_model.keras"
 @st.cache_resource
 def load_trained_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading model from Google Drive... this may take a minute."):
-            # gdown handles the "large file" warning from Google Drive automatically
+        with st.spinner("Downloading model from Google Drive..."):
             gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
-    # Use the tf_keras bridge to load the model
-    model = keras.models.load_model(MODEL_PATH) 
+    # Add compile=False here
+    try:
+        model = keras.models.load_model(MODEL_PATH, compile=False)
+    except Exception as e:
+        # If it still fails, it might be a Keras 3 vs Legacy issue
+        st.error(f"Error loading model: {e}")
+        return None
+        
     return model
 
 # CRITICAL: You must call the function here!
