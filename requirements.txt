@@ -1,6 +1,7 @@
-streamlit
-tensorflow
-numpy
+streamlit==1.33.0
+tensorflow==2.15.0
+numpy==1.26.4
 pillow
 requests
+gdown
 scikit-learn
