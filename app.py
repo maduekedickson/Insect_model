@@ -9,17 +9,22 @@ import os
 # DOWNLOAD MODEL FROM DRIVE
 # =========================
 
-MODEL_URL = "https://drive.google.com/file/d/1aVcHWqBMBukgRfWIcVU0UdzY3djSxQ5o/view?usp=sharing"
-MODEL_PATH = "model.keras"
+# =========================
+# DOWNLOAD MODEL FROM DRIVE
+# =========================
+
+MODEL_URL = "https://drive.google.com/uc?id=1aVcHWqBMBukgRfWIcVU0UdzY3djSxQ5o"
+MODEL_PATH = "insect_model.keras"
 
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
         with st.spinner("Downloading model..."):
+            import requests
             r = requests.get(MODEL_URL)
             with open(MODEL_PATH, "wb") as f:
                 f.write(r.content)
-    
+
     model = tf.keras.models.load_model(MODEL_PATH)
     return model
 
