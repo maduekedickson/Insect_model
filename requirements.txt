@@ -1,6 +1,6 @@
 streamlit>=1.40.0
 tensorflow==2.21.0
-tf_keras
+keras==3.8.0
 numpy>=1.26.4,<2.0.0
 pillow
 requests
