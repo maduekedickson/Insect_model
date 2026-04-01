@@ -1,10 +1,19 @@
 import streamlit as st
 import tensorflow as tf
-import keras  # Use native keras 3
+import keras  # Keras 3
 import numpy as np
 from PIL import Image
 import gdown
 import os
+
+# =========================
+# PAGE CONFIG (UI UPGRADE)
+# =========================
+st.set_page_config(page_title="Insect AI", layout="centered")
+
+st.title("🦟 Insect Classification AI")
+st.caption("Powered by Deep Learning (MobileNetV2)")
+st.divider()
 
 # =========================
 # DOWNLOAD MODEL FROM DRIVE
@@ -21,15 +30,17 @@ def load_trained_model():
             gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
     try:
-        # Use native keras to load the Keras 3 model
-        # We use compile=False to avoid any optimizer-related dependency issues
         model = keras.models.load_model(MODEL_PATH, compile=False)
         return model
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"❌ Error loading model: {e}")
         return None
 
 model = load_trained_model()
+
+# 🔥 Handle model load failure safely
+if model is None:
+    st.stop()
 
 # =========================
 # CLASS NAMES
@@ -48,28 +59,49 @@ class_names = [
 ]
 
 # =========================
-# UI
+# FILE UPLOAD UI
 # =========================
 
-st.title("🦟 Insect Classification App")
-st.write("Upload an insect image to classify it.")
+uploaded_file = st.file_uploader(
+    "📤 Upload an insect image",
+    type=["jpg", "jpeg", "png"]
+)
 
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg","png","jpeg"])
+# =========================
+# PREDICTION PIPELINE
+# =========================
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_container_width=True)
 
+    st.divider()
+
     # Preprocess
-    img = image.resize((192,192))
+    img = image.resize((192, 192))
     img_array = np.array(img).astype(np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     # Prediction
-    with st.spinner("Classifying..."):
-        prediction = model.predict(img_array)
-        predicted_class = class_names[np.argmax(prediction)]
-        confidence = np.max(prediction)
+    with st.spinner("🔍 Classifying..."):
+        prediction = model.predict(img_array)[0]
 
-    st.success(f"Prediction: {predicted_class}")
+    predicted_class = class_names[np.argmax(prediction)]
+    confidence = float(np.max(prediction))
+
+    # =========================
+    # OUTPUT (ENHANCED UI)
+    # =========================
+
+    st.success(f"✅ Prediction: **{predicted_class}**")
     st.info(f"Confidence: {confidence:.2f}")
+
+    # 🔥 Confidence bar
+    st.progress(confidence)
+
+    st.subheader("🔝 Top 3 Predictions")
+
+    top_indices = np.argsort(prediction)[-3:][::-1]
+
+    for i in top_indices:
+        st.write(f"{class_names[i]} — {prediction[i]:.2f}")
