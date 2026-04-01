@@ -1,6 +1,6 @@
 import streamlit as st
 import tensorflow as tf
-import tf_keras as keras 
+import keras  # Use native keras 3
 import numpy as np
 from PIL import Image
 import gdown
@@ -10,7 +10,6 @@ import os
 # DOWNLOAD MODEL FROM DRIVE
 # =========================
 
-# Use the file ID from your URL
 FILE_ID = "1aVcHWqBMBukgRfWIcVU0UdzY3djSxQ5o"
 MODEL_URL = f"https://drive.google.com/uc?id={FILE_ID}"
 MODEL_PATH = "insect_model.keras"
@@ -18,20 +17,18 @@ MODEL_PATH = "insect_model.keras"
 @st.cache_resource
 def load_trained_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading model from Google Drive..."):
+        with st.spinner("Downloading model..."):
             gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
-    # Add compile=False here
     try:
+        # Use native keras to load the Keras 3 model
+        # We use compile=False to avoid any optimizer-related dependency issues
         model = keras.models.load_model(MODEL_PATH, compile=False)
+        return model
     except Exception as e:
-        # If it still fails, it might be a Keras 3 vs Legacy issue
         st.error(f"Error loading model: {e}")
         return None
-        
-    return model
 
-# CRITICAL: You must call the function here!
 model = load_trained_model()
 
 # =========================
