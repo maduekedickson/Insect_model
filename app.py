@@ -1,37 +1,36 @@
 import streamlit as st
 import tensorflow as tf
+import tf_keras as keras 
 import numpy as np
 from PIL import Image
-import requests
+import gdown
 import os
 
 # =========================
 # DOWNLOAD MODEL FROM DRIVE
 # =========================
 
-# =========================
-# DOWNLOAD MODEL FROM DRIVE
-# =========================
-
-MODEL_URL = "https://drive.google.com/uc?id=1aVcHWqBMBukgRfWIcVU0UdzY3djSxQ5o"
+# Use the file ID from your URL
+FILE_ID = "1aVcHWqBMBukgRfWIcVU0UdzY3djSxQ5o"
+MODEL_URL = f"https://drive.google.com/uc?id={FILE_ID}"
 MODEL_PATH = "insect_model.keras"
 
 @st.cache_resource
-def load_model():
+def load_trained_model():
     if not os.path.exists(MODEL_PATH):
-        with st.spinner("Downloading model..."):
-            import requests
-            r = requests.get(MODEL_URL)
-            with open(MODEL_PATH, "wb") as f:
-                f.write(r.content)
+        with st.spinner("Downloading model from Google Drive... this may take a minute."):
+            # gdown handles the "large file" warning from Google Drive automatically
+            gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
 
-    model = tf.keras.models.load_model(MODEL_PATH)
+    # Use the tf_keras bridge to load the model
+    model = keras.models.load_model(MODEL_PATH) 
     return model
 
-model = load_model()
+# CRITICAL: You must call the function here!
+model = load_trained_model()
 
 # =========================
-# CLASS NAMES (IMPORTANT)
+# CLASS NAMES
 # =========================
 
 class_names = [
@@ -57,17 +56,18 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg","png","jpeg"]
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     # Preprocess
     img = image.resize((192,192))
-    img_array = np.array(img) / 255.0
+    img_array = np.array(img).astype(np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     # Prediction
-    prediction = model.predict(img_array)
-    predicted_class = class_names[np.argmax(prediction)]
-    confidence = np.max(prediction)
+    with st.spinner("Classifying..."):
+        prediction = model.predict(img_array)
+        predicted_class = class_names[np.argmax(prediction)]
+        confidence = np.max(prediction)
 
     st.success(f"Prediction: {predicted_class}")
     st.info(f"Confidence: {confidence:.2f}")
